@@ -1,0 +1,17 @@
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+const rateLimit = require('express-rate-limit');
+app.use('/suggest', rateLimit({ windowMs: 60 * 1000, max: 10 }));
+
+app.get('/', (req, res) => res.send('Rizzy server chal raha hai'));
+
+app.post('/suggest', async (req, res) => {
+  const chat = (req.body.chat || '').slice(-1500);
+  console.log('Chat mila:', chat);
+  res.json({ suggestions: ["reply 1", "reply 2", "reply 3"] });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => console.log('Server chal raha hai: ' + PORT));
