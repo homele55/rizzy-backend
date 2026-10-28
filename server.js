@@ -7,20 +7,28 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = 'gemini-3.8-flash';
+// Sahi model name: gemini-2.5-flash ya gemini-1.5-flash
+const MODEL = 'gemini-2.5-flash';
 
 app.get('/', (req, res) => res.send('Rizzy backend chal raha hai'));
 
 app.post('/suggest', async (req, res) => {
   try {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: 'text nahi mila' });
-    if (!API_KEY) return res.status(500).json({ error: 'API key set nahi hai' });
+    // text ya chat dono ko support karega
+    const incomingText = req.body.text || req.body.chat;
+    if (!incomingText) {
+      return res.status(400).json({ error: 'text ya chat payload nahi mila' });
+    }
+
+    if (!API_KEY) {
+      console.error('GEMINI_API_KEY environment variable missing hai');
+      return res.status(500).json({ error: 'API key set nahi hai' });
+    }
 
     const prompt =
       'Neeche ek chat ka last message hai. Uske liye 3 chhote, natural, ' +
       'friendly reply suggestions do, usi language (Hinglish) mein. ' +
-      'Har reply alag line mein ho, bina numbering ke.\n\nMessage: ' + text;
+      'Har reply alag line mein ho, bina numbering ke.\n\nMessage: ' + incomingText;
 
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -46,10 +54,10 @@ app.post('/suggest', async (req, res) => {
     const suggestions = out.split('\n').map(s => s.trim()).filter(Boolean);
     res.json({ suggestions });
   } catch (e) {
-    console.error(e);
+    console.error('Server catch error:', e);
     res.status(500).json({ error: 'server error' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server chal raha hai port', PORT));
+app.listen(PORT, '0.0.0.0', () => console.log('Server chal raha hai port', PORT));
